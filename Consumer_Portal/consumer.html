@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consumer Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group input, .form-group button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #45a049;
+        }
+        .service-list, .request-list {
+            margin-top: 20px;
+        }
+        .service-item, .request-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+        }
+        .service-item {
+            cursor: pointer;
+        }
+        .service-item:hover {
+            background-color: #f0f0f0;
+        }
+        .request-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #fafafa;
+        }
+        .request-item button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .request-item button:hover {
+            background-color: #e53935;
+        }
+        .form-group input[required] {
+            border-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consumer Dashboard</h1>
+        <div class="service-list" id="serviceList">
+            <!-- Available services will be listed here -->
+        </div>
+        <div class="request-form" id="requestForm" style="display: none;">
+            <h2>Request Service</h2>
+            <div class="form-group">
+                <input type="text" id="consumerName" placeholder="Your Name" required>
+                <input type="email" id="consumerEmail" placeholder="Your Email" required>
+                <input type="text" id="consumerMobile" placeholder="Your Mobile Number" required>
+                <input type="text" id="consumerAddress" placeholder="Your Address" required>
+                <button onclick="submitRequest()">Submit Request</button>
+            </div>
+        </div>
+        <div class="request-list" id="requestList">
+            <!-- Your requests will be listed here -->
+        </div>
+    </div>
+
+    <script>
+        const serviceKey = 'services';
+        const requestKey = 'requests';
+        const refreshInterval = 5000; // Check for updates every 5 seconds
+
+        function getServices() {
+            return JSON.parse(localStorage.getItem(serviceKey)) || [];
+        }
+
+        function getRequests() {
+            return JSON.parse(localStorage.getItem(requestKey)) || [];
+        }
+
+        function setRequests(requests) {
+            localStorage.setItem(requestKey, JSON.stringify(requests));
+        }
+
+        function displayServiceList() {
+            const services = getServices().filter(service => {
+                // Filter out services that have been declined
+                const requests = getRequests();
+                const declinedServiceIds = requests.filter(request => request.status === 'declined').map(request => request.serviceId);
+                return !declinedServiceIds.includes(service.id);
+            });
+            const serviceList = document.getElementById('serviceList');
+            const requestForm = document.getElementById('requestForm');
+            serviceList.innerHTML = '';
+            services.forEach(service => {
+                serviceList.innerHTML += `
+                    <div class="service-item" onclick="showRequestForm(${service.id}, '${service.name}')">
+                        <strong>${service.name}</strong><br>
+                        ${service.description}
+                    </div>
+                `;
+            });
+        }
+
+        function showRequestForm(serviceId, serviceName) {
+            document.getElementById('requestForm').style.display = 'block';
+            document.getElementById('requestForm').dataset.serviceId = serviceId;
+            document.getElementById('requestForm').dataset.serviceName = serviceName;
+        }
+
+        function submitRequest() {
+            const serviceId = parseInt(document.getElementById('requestForm').dataset.serviceId, 10);
+            const serviceName = document.getElementById('requestForm').dataset.serviceName;
+            const consumerName = document.getElementById('consumerName').value;
+            const consumerEmail = document.getElementById('consumerEmail').value;
+            const consumerMobile = document.getElementById('consumerMobile').value;
+            const consumerAddress = document.getElementById('consumerAddress').value;
+
+            if (serviceId && consumerName && consumerEmail && consumerMobile && consumerAddress) {
+                const requests = getRequests();
+                const request = {
+                    id: Date.now(),
+                    serviceId,
+                    serviceName,
+                    consumerName,
+                    consumerEmail,
+                    consumerMobile,
+                    consumerAddress,
+                    status: 'pending'
+                };
+                requests.push(request);
+                setRequests(requests);
+                document.getElementById('consumerName').value = '';
+                document.getElementById('consumerEmail').value = '';
+                document.getElementById('consumerMobile').value = '';
+                document.getElementById('consumerAddress').value = '';
+                document.getElementById('requestForm').style.display = 'none';
+                displayServiceList();
+            }
+        }
+
+        function updateRequestList() {
+            const requests = getRequests().sort((a, b) => b.id - a.id); // Sort requests by ID (newest first)
+            const requestList = document.getElementById('requestList');
+            requestList.innerHTML = '';
+            requests.forEach(request => {
+                requestList.innerHTML += `
+                    <div class="request-item">
+                        <strong>Requested Service: ${request.serviceName}</strong><br>
+                        <strong>Consumer Info:</strong><br>
+                        Name: ${request.consumerName}<br>
+                        Email: ${request.consumerEmail}<br>
+                        Mobile: ${request.consumerMobile}<br>
+                        Address: ${request.consumerAddress}<br>
+                        <strong>Status:</strong> ${request.status}
+                    </div>
+                `;
+            });
+        }
+
+        function startAutoRefresh() {
+            // Initial load
+            displayServiceList();
+            updateRequestList();
+
+            // Set up periodic updates
+            setInterval(() => {
+                displayServiceList();
+                updateRequestList();
+            }, refreshInterval);
+        }
+
+        // Handle updates from provider dashboard
+        window.addEventListener('storage', function(event) {
+            if (event.storageArea === localStorage) {
+                displayServiceList();
+                updateRequestList();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', startAutoRefresh);
+
+        function updateRequestList() {
+    const requests = getRequests().sort((a, b) => b.id - a.id); // Sort requests by ID (newest first)
+    const requestList = document.getElementById('requestList');
+    requestList.innerHTML = '';
+    requests.forEach(request => {
+        let requestItem = `
+            <div class="request-item">
+                <strong>Requested Service: ${request.serviceName}</strong><br>
+                <strong>Consumer Info:</strong><br>
+                Name: ${request.consumerName}<br>
+                Email: ${request.consumerEmail}<br>
+                Mobile: ${request.consumerMobile}<br>
+                Address: ${request.consumerAddress}<br>
+                <strong>Status:</strong> ${request.status}
+        `;
+        
+        // If the request is accepted, show the "Make Payment" button
+        
+        if (request.status === 'accepted') {
+            requestItem += `
+               <a href="payment/index.html"><button onclick="makePayment(${request.id})">Make Payment</button></a>
+                
+            `;
+        }
+        
+        requestItem += '</div>';
+        requestList.innerHTML += requestItem;
+    });
+}
+
+function makePayment(requestId) {
+    alert('Redirecting to payment for request ID: ' + requestId);
+    // Here you can add logic to process the payment, e.g., redirect to a payment gateway
+}
+
+    </script>
+    
+</body>
+</html>

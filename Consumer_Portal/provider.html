@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group input, .form-group button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #45a049;
+        }
+        .service-list, .request-list, .provider-info, .service-section, .request-section {
+            margin-top: 20px;
+        }
+        .service-item, .request-item, .provider-info-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+        }
+        .service-item button, .request-item button {
+            margin: 5px 0;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .service-item button {
+            background-color: #2196F3;
+            color: white;
+        }
+        .service-item button:hover {
+            background-color: #1e88e5;
+        }
+        .request-item button {
+            background-color: #f44336;
+            color: white;
+        }
+        .request-item button:hover {
+            background-color: #e53935;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Provider Dashboard</h1>
+        
+        <div class="provider-info">
+            <h2>Personal Information</h2>
+            <div class="form-group">
+                <input type="text" id="providerName" placeholder="Provider Name" required>
+                <input type="email" id="providerEmail" placeholder="Email" required>
+                <input type="text" id="providerMobile" placeholder="Mobile Number" required>
+                <input type="text" id="providerAddress" placeholder="Address" required>
+            </div>
+        </div>
+        
+        <div class="service-section">
+            <h2>Add Service</h2>
+            <div class="form-group">
+                <input type="text" id="serviceName" placeholder="Service Name" required>
+                <input type="text" id="serviceDescription" placeholder="Service Description" required>
+                <button onclick="addService()">Add Service</button>
+            </div>
+            <div class="service-list" id="serviceList">
+                <!-- Added services will be listed here -->
+            </div>
+        </div>
+
+        <div class="request-section">
+            <h2>Requested Services</h2>
+            <div class="request-list" id="requestList">
+                <!-- Consumer requests will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const storageKey = 'services';
+        const requestKey = 'requests';
+        const refreshInterval = 5000; // Check for updates every 5 seconds
+
+        function getServices() {
+            return JSON.parse(localStorage.getItem(storageKey)) || [];
+        }
+
+        function getRequests() {
+            return JSON.parse(localStorage.getItem(requestKey)) || [];
+        }
+
+        function setServices(services) {
+            localStorage.setItem(storageKey, JSON.stringify(services));
+        }
+
+        function setRequests(requests) {
+            localStorage.setItem(requestKey, JSON.stringify(requests));
+        }
+
+        function addService() {
+            const name = document.getElementById('serviceName').value;
+            const description = document.getElementById('serviceDescription').value;
+
+            if (name && description) {
+                const services = getServices();
+                const service = { id: Date.now(), name, description };
+                services.push(service);
+                setServices(services);
+                document.getElementById('serviceName').value = '';
+                document.getElementById('serviceDescription').value = '';
+            }
+        }
+
+        function updateServiceList() {
+            const services = getServices();
+            const serviceList = document.getElementById('serviceList');
+            serviceList.innerHTML = '';
+            services.forEach(service => {
+                serviceList.innerHTML += `
+                    <div class="service-item">
+                        <strong>${service.name}</strong><br>
+                        ${service.description}<br>
+                        <button onclick="editService(${service.id})">Edit</button>
+                        <button onclick="deleteService(${service.id})">Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        function updateRequestList() {
+            const requests = getRequests().sort((a, b) => b.id - a.id); // Sort requests by ID (newest first)
+            const serviceList = getServices();
+            const requestList = document.getElementById('requestList');
+            requestList.innerHTML = '';
+            requests.forEach(request => {
+                const service = serviceList.find(s => s.id === request.serviceId);
+                if (request.status === 'pending') {
+                    requestList.innerHTML += `
+                        <div class="request-item">
+                            <strong>Requested Service: ${service ? service.name : 'Unknown'}</strong><br>
+                            <strong>Consumer Info:</strong><br>
+                            Name: ${request.consumerName}<br>
+                            Email: ${request.consumerEmail}<br>
+                            Mobile: ${request.consumerMobile}<br>
+                            Address: ${request.consumerAddress}<br>
+                            <button onclick="acceptRequest(${request.id})">Accept</button>
+                            <button onclick="declineRequest(${request.id})">Decline</button>
+                        </div>
+                    `;
+                } else {
+                    requestList.innerHTML += `
+                        <div class="request-item">
+                            <strong>Requested Service: ${service ? service.name : 'Unknown'}</strong><br>
+                            <strong>Status:</strong> ${request.status}<br>
+                            <strong>Consumer Info:</strong><br>
+                            Name: ${request.consumerName}<br>
+                            Email: ${request.consumerEmail}<br>
+                            Mobile: ${request.consumerMobile}<br>
+                            Address: ${request.consumerAddress}<br>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function editService(id) {
+            const services = getServices();
+            const service = services.find(s => s.id === id);
+            if (service) {
+                document.getElementById('serviceName').value = service.name;
+                document.getElementById('serviceDescription').value = service.description;
+                deleteService(id);
+            }
+        }
+
+        function deleteService(id) {
+            const services = getServices().filter(s => s.id !== id);
+            setServices(services);
+        }
+
+        function acceptRequest(id) {
+            if (confirm('Are you sure you want to accept this request?')) {
+                const requests = getRequests().map(request => {
+                    if (request.id === id) {
+                        return { ...request, status: 'accepted' };
+                    }
+                    return request;
+                });
+                setRequests(requests);
+            }
+        }
+
+        function declineRequest(id) {
+            if (confirm('Are you sure you want to decline this request?')) {
+                const requests = getRequests().map(request => {
+                    if (request.id === id) {
+                        return { ...request, status: 'declined' };
+                    }
+                    return request;
+                });
+                setRequests(requests);
+            }
+        }
+
+        function startAutoRefresh() {
+            // Initial load
+            updateServiceList();
+            updateRequestList();
+
+            // Set up periodic updates
+            setInterval(() => {
+                updateServiceList();
+                updateRequestList();
+            }, refreshInterval);
+        }
+
+        // Handle updates from consumer dashboard
+        window.addEventListener('storage', function(event) {
+            if (event.storageArea === localStorage) {
+                updateServiceList();
+                updateRequestList();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', startAutoRefresh);
+    </script>
+</body>
+</html>

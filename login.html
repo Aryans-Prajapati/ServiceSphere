@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-form h2 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: center;
+        }
+
+        .login-form label {
+            margin-bottom: 5px;
+            color: #666;
+            padding-left: 15px;
+        }
+
+        .login-form input {
+            padding: 7px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+
+        .login-form button {
+            padding: 9px;
+            border: none;
+            border-radius: 25px;
+            background-color: #007bff;
+            opacity: 0.8;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 12px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 150px;
+        }
+
+        .login-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .login-form h5 {
+            margin-bottom: 5px;
+            color: #666;
+            display: flex;
+            justify-content: center;
+            padding: 5px;
+            margin: 0;
+        }
+
+        #span {
+            color: rgb(0, 174, 255);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <form action="login.php" method="POST" class="login-form">
+            <h2>Login</h2>
+            <label for="email">Email:</label>
+            <input type="email" name="email" id="email" required>
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required>
+            <button type="submit">Login</button>
+            <h5>Forgot your password? <span id="span">Reset here</span></h5>
+        </form>
+    </div>
+</body>
+</html>
